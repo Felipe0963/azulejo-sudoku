@@ -44,7 +44,8 @@ describe('copy', () => {
         { type: 'placed', cell: 13, digit: 7 },
       ]),
     ).toBe('Hint: row 2, column 5 is 7.');
-    expect(announcementFor([{ type: 'won' }])).toBe('The mural is complete.');
+    // A vitória é anunciada dentro do diálogo de vitória, não na região da página.
+    expect(announcementFor([{ type: 'glazed', box: 8 }, { type: 'won' }])).toBe('');
     expect(announcementFor([{ type: 'placed', cell: 2, digit: 4 }])).toBe('');
   });
 });

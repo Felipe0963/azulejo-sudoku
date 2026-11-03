@@ -61,9 +61,12 @@ export const copy = {
   changeLevel: 'Change level',
 } as const;
 
-/** O que a região aria-live anuncia depois de uma ação. A vitória tem prioridade, depois o resto em ordem. */
+/**
+ * O que a região aria-live da página anuncia depois de uma ação, em ordem. Na vitória, nada: a tela de vitória é
+ * um diálogo modal (o resto da página fica inerte) e anuncia `copy.won` na sua própria região de status.
+ */
 export function announcementFor(events: readonly GameEvent[]): string {
-  if (events.some((event) => event.type === 'won')) return copy.won;
+  if (events.some((event) => event.type === 'won')) return '';
   const parts: string[] = [];
   for (const event of events) {
     if (event.type === 'hinted') parts.push(copy.hinted(event.cell, event.digit));

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bankSize, pickPuzzle } from '../../src/game/bank';
+import { bankSize, pickPuzzle, seedOf } from '../../src/game/bank';
 import { LEVELS, grade } from '../../src/game/grade';
 import { countSolutions } from '../../src/game/solver';
 
@@ -17,5 +17,14 @@ describe('bank', () => {
 
   it('a semente escolhe o puzzle de forma estável', () => {
     expect(pickPuzzle('hard', 5)).toEqual(pickPuzzle('hard', 5 + bankSize('hard')));
+  });
+
+  it('seedOf devolve uma semente positiva que escolhe o mesmo puzzle', () => {
+    for (const index of [0, 7]) {
+      const seed = seedOf('medium', pickPuzzle('medium', index))!;
+      expect(seed).toBeGreaterThan(0);
+      expect(pickPuzzle('medium', seed)).toEqual(pickPuzzle('medium', index));
+    }
+    expect(seedOf('medium', Array<number>(81).fill(0))).toBeNull();
   });
 });

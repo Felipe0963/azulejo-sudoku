@@ -12,7 +12,7 @@ const props = defineProps<{
   shakeCells: ReadonlySet<number>;
   shakeKey: number;
 }>();
-const emit = defineEmits<{ select: [cell: number]; keydown: [event: KeyboardEvent] }>();
+const emit = defineEmits<{ select: [cell: number] }>();
 
 const grid = ref<HTMLElement | null>(null);
 const rows = Array.from({ length: 9 }, (_, row) => Array.from({ length: 9 }, (_, col) => row * 9 + col));
@@ -31,6 +31,15 @@ const isSame = (cell: number) => {
 };
 
 const glazedCell = (cell: number) => props.state.glazed[boxOf(cell)] === true;
+
+function focus() {
+  const target =
+    props.selected === null
+      ? grid.value
+      : grid.value?.querySelector<HTMLElement>(`[data-cell="${String(props.selected)}"]`);
+  target?.focus();
+}
+defineExpose({ focus });
 
 // Leva o foco do teclado para a casa selecionada.
 watch(
@@ -51,7 +60,6 @@ watch(
     role="grid"
     :aria-label="copy.boardLabel"
     :tabindex="selected === null ? 0 : -1"
-    @keydown="emit('keydown', $event)"
     @focus="selected === null && emit('select', 0)"
   >
     <TileMural :glazed="state.glazed" />

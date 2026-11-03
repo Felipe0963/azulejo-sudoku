@@ -44,3 +44,10 @@ test('vitória sem violações', async ({ page }) => {
   await expect(page.getByRole('dialog')).toBeVisible();
   expect(await axe(page)).toEqual([]);
 });
+
+test('pausa sem violações', async ({ page }) => {
+  await openGame(page);
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Paused' })).toBeVisible();
+  expect(await axe(page)).toEqual([]);
+});

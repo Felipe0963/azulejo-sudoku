@@ -88,8 +88,14 @@ test('as setas movem a seleção', async ({ page }) => {
 
 test('a pausa cobre o tabuleiro e o cronômetro para', async ({ page }) => {
   await openGame(page);
+  const time = page.locator('.game-header__time');
+  await expect(time).not.toHaveText(/00:00$/);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Paused' })).toBeVisible();
+  const before = await time.textContent();
+  // Uma espera de verdade: ligado, o cronômetro anda a cada 250 ms.
+  await page.waitForTimeout(1500);
+  await expect(time).toHaveText(before!);
   await page.getByRole('button', { name: 'Resume', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Paused' })).toBeHidden();
 });
@@ -98,8 +104,21 @@ test('a partida continua depois de recarregar', async ({ page }) => {
   await openGame(page);
   const empty = puzzle().findIndex((value) => value === 0);
   await type(page, empty, solution()[empty]!);
+  await page.reload();
+  await expect(cell(page, empty)).toHaveAccessibleName(new RegExp(`, ${String(solution()[empty])}$`));
+  await expect(page).toHaveURL(/\?level=easy&seed=7$/);
+});
+
+test('o início oferece continuar a partida salva', async ({ page }) => {
+  await openGame(page);
+  const empty = puzzle().findIndex((value) => value === 0);
+  await type(page, empty, solution()[empty]!);
   await page.goto('/');
   await page.getByRole('button', { name: /Continue/ }).click();
+  await expect(cell(page, empty)).toHaveAccessibleName(new RegExp(`, ${String(solution()[empty])}$`));
+  // A URL passa a apontar para esta partida: recarregar continua nela.
+  await expect(page).toHaveURL(/\?level=easy&seed=\d+$/);
+  await page.reload();
   await expect(cell(page, empty)).toHaveAccessibleName(new RegExp(`, ${String(solution()[empty])}$`));
 });
 
@@ -107,8 +126,10 @@ test('resolver o puzzle inteiro mostra a vitória', async ({ page }) => {
   test.slow();
   await openGame(page);
   await fillSolution(page);
-  await expect(page.getByRole('dialog', { name: 'The mural is complete.' })).toBeVisible();
-  await expect(page.getByTestId('announcer')).toHaveText('The mural is complete.');
+  const dialog = page.getByRole('dialog', { name: 'The mural is complete.' });
+  await expect(dialog).toBeVisible();
+  // O diálogo é modal: a vitória é anunciada na região de status dentro dele.
+  await expect(dialog.getByRole('status')).toHaveText('The mural is complete.');
 });
 
 test('sem erros no console e sem pedidos para fora do site', async ({ page, baseURL }) => {
