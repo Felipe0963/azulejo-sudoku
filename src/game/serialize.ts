@@ -1,6 +1,7 @@
 import { newGame, progress, type GameState } from './game';
 import { LEVELS, type Level } from './grade';
 import { format, parse } from './grid';
+import { countSolutions } from './solver';
 
 const VERSION = 1;
 
@@ -45,11 +46,17 @@ const isStored = (value: unknown): value is Stored => {
     v.notes.length === 81 &&
     v.notes.every((mask) => Number.isInteger(mask) && mask >= 0 && mask <= 0x1ff) &&
     Number.isInteger(v.hints) &&
-    typeof v.elapsedMs === 'number'
+    (v.hints as number) >= 0 &&
+    typeof v.elapsedMs === 'number' &&
+    Number.isFinite(v.elapsedMs) &&
+    v.elapsedMs >= 0
   );
 };
 
-/** Restaura uma partida salva. Qualquer coisa inválida ou de outra versão devolve null. */
+/**
+ * Restaura uma partida salva. Devolve null para qualquer coisa inválida ou de outra versão: puzzle sem solução
+ * única, número do puzzle alterado, anotação em casa preenchida, partida já vencida, tempo ou dicas impossíveis.
+ */
 export function deserialize(text: string): Saved | null {
   try {
     const raw: unknown = JSON.parse(text);
@@ -57,8 +64,11 @@ export function deserialize(text: string): Saved | null {
     const puzzle = parse(raw.puzzle);
     const values = parse(raw.values);
     if (puzzle.some((value, cell) => value !== 0 && values[cell] !== value)) return null;
+    if (raw.notes.some((mask, cell) => mask !== 0 && values[cell] !== 0)) return null;
+    if (countSolutions(puzzle) !== 1) return null;
     const fresh = newGame(raw.level, puzzle);
     const { glazed, won } = progress(values, fresh.solution);
+    if (won) return null;
     return {
       state: { ...fresh, values, notes: raw.notes, hints: raw.hints, glazed, won },
       elapsedMs: raw.elapsedMs,
