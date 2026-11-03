@@ -3,17 +3,17 @@ import type { Level } from './grade';
 import { BOXES, PEERS, UNITS, boxOf, type Values } from './grid';
 import { solve } from './solver';
 
-/** A parte do estado que desfazer e refazer guardam. */
+/** A parte do estado que desfazer e refazer guardam. As dicas usadas ficam fora: desfazer não as devolve. */
 export interface Snapshot {
   readonly values: Values;
   /** Máscara de anotações de cada casa. */
   readonly notes: readonly number[];
   readonly glazed: readonly boolean[];
-  readonly hints: number;
 }
 
 export interface GameState extends Snapshot {
   readonly level: Level;
+  readonly hints: number;
   readonly puzzle: Values;
   readonly solution: Values;
   readonly past: readonly Snapshot[];
@@ -73,12 +73,7 @@ export function newGame(level: Level, puzzle: Values): GameState {
   };
 }
 
-const snapshotOf = ({ values, notes, glazed, hints }: Snapshot): Snapshot => ({
-  values,
-  notes,
-  glazed,
-  hints,
-});
+const snapshotOf = ({ values, notes, glazed }: Snapshot): Snapshot => ({ values, notes, glazed });
 
 function blockedReason(state: GameState, cell: number): 'given' | 'glazed' | null {
   if (state.puzzle[cell] !== 0) return 'given';

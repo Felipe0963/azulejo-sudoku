@@ -59,7 +59,8 @@ describe('propriedades do jogo', () => {
         while (current.past.length > 0) current = apply(current, { type: 'undo' }).state;
         expect(current.values).toEqual(states[0]!.values);
         expect(current.notes).toEqual(states[0]!.notes);
-        expect(current.hints).toBe(0);
+        // As dicas ficam fora do histórico: desfazer não devolve dica usada.
+        expect(current.hints).toBe(last.hints);
         // Se a sequência terminou com desfazer, `last` ainda tem jogadas a refazer; refazer só as desfeitas volta a `last`.
         for (let step = 0; step < last.past.length; step++) current = apply(current, { type: 'redo' }).state;
         expect(current.future).toHaveLength(last.future.length);

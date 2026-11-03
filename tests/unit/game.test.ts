@@ -119,6 +119,14 @@ describe('dica', () => {
     expect(result.events).toContainEqual({ type: 'hinted', cell: 2, digit: 4 });
   });
 
+  it('desfazer uma dica tira o número, mas a dica continua contada', () => {
+    const hinted = run(start(), { type: 'hint', cell: null });
+    const undone = apply(hinted, { type: 'undo' }).state;
+    expect(undone.values[2]).toBe(0);
+    expect(undone.hints).toBe(1);
+    expect(apply(undone, { type: 'redo' }).state.hints).toBe(1);
+  });
+
   it('com casa errada selecionada, corrige essa casa', () => {
     const wrong = run(start(), { type: 'place', cell: 10, digit: 1 });
     expect(apply(wrong, { type: 'hint', cell: 10 }).state.values[10]).toBe(7);
