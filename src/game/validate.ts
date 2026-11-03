@@ -19,7 +19,3 @@ export function conflicts(values: Values): Set<number> {
   }
   return result;
 }
-
-export const isComplete = (values: Values): boolean => values.every((value) => value !== 0);
-
-export const isSolved = (values: Values): boolean => isComplete(values) && conflicts(values).size === 0;

@@ -3,7 +3,7 @@ import { generateForLevel, generateSolution, type Generated } from '../../src/ga
 import { grade } from '../../src/game/grade';
 import { createRandom } from '../../src/game/random';
 import { countSolutions } from '../../src/game/solver';
-import { isSolved } from '../../src/game/validate';
+import { isValidSolution } from './fixtures';
 
 describe('random', () => {
   it('é determinístico e fica entre 0 e 1', () => {
@@ -21,7 +21,7 @@ describe('random', () => {
 describe('generateSolution', () => {
   it('gera uma grade completa e válida, igual para a mesma semente', () => {
     const solution = generateSolution(createRandom(7));
-    expect(isSolved(solution)).toBe(true);
+    expect(isValidSolution(solution)).toBe(true);
     expect(generateSolution(createRandom(7))).toEqual(solution);
     expect(generateSolution(createRandom(8))).not.toEqual(solution);
   });
@@ -35,7 +35,7 @@ describe('generateForLevel', () => {
       expect(found).not.toBeNull();
       expect(countSolutions(found!.puzzle)).toBe(1);
       expect(grade(found!.puzzle)).toBe(level);
-      expect(isSolved(found!.solution)).toBe(true);
+      expect(isValidSolution(found!.solution)).toBe(true);
     }
   });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { conflicts, isSolved } from '../../src/game/validate';
+import { conflicts } from '../../src/game/validate';
 import { CLASSIC, CLASSIC_SOLUTION } from './fixtures';
 
 describe('validate', () => {
@@ -13,11 +13,10 @@ describe('validate', () => {
     expect([...conflicts(values)].sort((a, b) => a - b)).toEqual([0, 2]);
   });
 
-  it('isSolved só é verdadeiro com o tabuleiro completo e sem conflitos', () => {
-    expect(isSolved(CLASSIC_SOLUTION)).toBe(true);
-    expect(isSolved(CLASSIC)).toBe(false);
+  it('a solução não tem conflitos; trocar dois números da linha cria conflitos nas colunas', () => {
+    expect(conflicts(CLASSIC_SOLUTION).size).toBe(0);
     const wrong = [...CLASSIC_SOLUTION];
     [wrong[0], wrong[1]] = [wrong[1]!, wrong[0]!];
-    expect(isSolved(wrong)).toBe(false);
+    expect(conflicts(wrong).size).toBeGreaterThan(0);
   });
 });
