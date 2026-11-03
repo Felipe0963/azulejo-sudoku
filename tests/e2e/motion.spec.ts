@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { cell, openGame, puzzle } from './helpers';
+import { BOXES } from '../../src/game';
+import { cell, openGame, puzzle, solution, type } from './helpers';
 
 // Sem movimento reduzido: as animações rodam de verdade.
 test.beforeEach(async ({ page }) => {
@@ -45,4 +46,53 @@ test('o carimbo nunca mostra dois números em lugares diferentes da casa', async
     visible.some((a) => visible.some((b) => Math.hypot(a.x - b.x, a.y - b.y) > 1)),
   );
   expect(apart).toEqual([]);
+});
+
+test('ao vitrificar, o número só fica branco depois que o padrão cobre a casa inteira', async ({ page }) => {
+  await openGame(page);
+  const values = puzzle();
+  const box = BOXES.findIndex((cells) => cells.filter((c) => values[c] === 0).length >= 2);
+  const empties = BOXES[box]!.filter((c) => values[c] === 0);
+  for (const index of empties.slice(0, -1)) await type(page, index, solution()[index]!);
+  await type(page, empties.at(-1)!, solution()[empties.at(-1)!]!);
+  // Congela as animações e confere quadro a quadro.
+  await page.evaluate(() => {
+    for (const animation of document.getAnimations()) animation.pause();
+  });
+  const problems: string[] = [];
+  for (let t = 0; t <= 700; t += 25) {
+    const found = await page.evaluate((time) => {
+      for (const animation of document.getAnimations()) animation.currentTime = time;
+      const art = document.querySelector('.mural__panel--glazing .mural__art')!;
+      const clip = /circle\(([\d.]+)px at ([\d.]+)px ([\d.]+)px\)/.exec(getComputedStyle(art).clipPath);
+      const svg = document.querySelector('.board__mural')!.getBoundingClientRect();
+      const scale = 900 / svg.width;
+      const bad: string[] = [];
+      for (const cell of document.querySelectorAll<HTMLElement>('.cell--glazing')) {
+        const style = getComputedStyle(cell);
+        if (style.color !== 'rgb(255, 255, 255)') continue;
+        const r = cell.getBoundingClientRect();
+        const corners = [
+          [r.left, r.top],
+          [r.right, r.top],
+          [r.left, r.bottom],
+          [r.right, r.bottom],
+        ];
+        const covered =
+          clip === null ||
+          corners.every(
+            ([x, y]) =>
+              Math.hypot(
+                (x! - svg.left) * scale - Number(clip[2]),
+                (y! - svg.top) * scale - Number(clip[3]),
+              ) <= Number(clip[1]),
+          );
+        if (!covered || style.backgroundColor !== 'rgba(0, 0, 0, 0)')
+          bad.push(`t=${String(time)} cell ${cell.dataset.cell ?? ''} ${clip?.[1] ?? 'no clip'}`);
+      }
+      return bad;
+    }, t);
+    problems.push(...found);
+  }
+  expect(problems).toEqual([]);
 });

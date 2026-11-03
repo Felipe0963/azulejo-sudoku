@@ -682,30 +682,129 @@ button {
   display: none;
 }
 
+/*
+ * Seleção: o véu da linha, da coluna e do bloco aparece suavemente. Casa vitrificada troca de fundo na hora:
+ * um fundo claro sumindo devagar atrás do número branco daria contraste baixo.
+ */
+.cell {
+  transition: background-color 140ms ease-out;
+}
+
+.cell--glazed {
+  transition: none;
+}
+
+/*
+ * Vitrificar. O padrão nasce do centro do painel (um círculo que cresce em 600 ms) e depois um brilho atravessa o
+ * painel. Cada casa fica com o fundo de faiança e o número escuro até o círculo cobri-la inteira (--hold: centro,
+ * lados, cantos): o número branco nunca fica sobre o rejunte claro.
+ */
 .mural__panel {
   opacity: 0;
-  transition: opacity 500ms ease-out;
 }
 
 .mural__panel--glazed {
   opacity: 1;
-  animation: glaze 700ms ease-out;
 }
 
-@keyframes glaze {
+.mural__panel--glazing .mural__art {
+  animation: mural-reveal 600ms linear both;
+}
+
+@keyframes mural-reveal {
   from {
-    clip-path: circle(0% at 50% 50%);
-    filter: brightness(1.6);
+    clip-path: circle(0px at var(--cx) var(--cy)) view-box;
   }
   to {
-    clip-path: circle(75% at 50% 50%);
-    filter: brightness(1);
+    clip-path: circle(213px at var(--cx) var(--cy)) view-box;
   }
 }
 
+.mural__shine {
+  transform: translateX(0);
+}
+
+.mural__panel--glazing .mural__shine {
+  animation: mural-shine 600ms ease-in-out 450ms both;
+}
+
+/* Vitória: os nove painéis brilham em sequência, em ordem de leitura. */
+.board--won .mural__shine {
+  animation: mural-shine 500ms ease-in-out calc(var(--order) * 90ms) both;
+}
+
+@keyframes mural-shine {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(600px);
+  }
+}
+
+.cell {
+  --hold-color: var(--cobalt-deep);
+}
+
+.cell--given {
+  --hold-color: var(--cobalt);
+}
+
+.cell--glazing {
+  /*
+   * Espera o círculo (raio de 0 a 213 em 600 ms) cobrir a casa toda: o canto mais longe fica a ~71 do centro do
+   * painel na casa do meio, ~158 nas dos lados e ~212 nas dos cantos (em unidades do mural). Com folga: 230, 470 e
+   * 710 ms. O teste "ao vitrificar…" em motion.spec.ts confere isso quadro a quadro.
+   */
+  --hold: calc(230ms + var(--ring) * 240ms);
+  animation: glaze-hold var(--hold) linear;
+}
+
+@keyframes glaze-hold {
+  from,
+  to {
+    color: var(--hold-color);
+    background-color: var(--glaze);
+  }
+}
+
+/* Sem o halo cobalto enquanto o número ainda é escuro sobre a faiança. */
+.cell--glazing .cell__value {
+  animation: glaze-hold-value var(--hold) linear;
+}
+
+@keyframes glaze-hold-value {
+  from,
+  to {
+    text-shadow: none;
+  }
+}
+
+/* Tela de vitória: sobe e aparece. */
+.win[open] {
+  animation: win-enter 280ms ease-out;
+}
+
+.win[open]::backdrop {
+  animation: fade-in 280ms ease-out;
+}
+
+@keyframes win-enter {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Movimento reduzido: sem tremor, sem brilho, sem padrão crescendo; só transições curtas de opacidade. */
 @media (prefers-reduced-motion: reduce) {
-  .stamp-enter-active,
-  .mural__panel {
+  .stamp-enter-active {
     transition: opacity 120ms linear;
   }
 
@@ -713,7 +812,31 @@ button {
     transform: none;
   }
 
-  .mural__panel--glazed {
+  .cell {
+    transition: none;
+  }
+
+  .mural__panel--glazing .mural__art,
+  .mural__panel--glazing .mural__shine,
+  .board--won .mural__shine {
     animation: none;
+  }
+
+  .mural__shine {
+    display: none;
+  }
+
+  /* O painel aparece num fade curto, e a casa espera o fade acabar para o número ficar branco. */
+  .mural__panel--glazing {
+    animation: fade-in 120ms linear;
+  }
+
+  .cell--glazing {
+    --hold: 120ms;
+  }
+
+  .win[open],
+  .win[open]::backdrop {
+    animation: fade-in 150ms linear;
   }
 }

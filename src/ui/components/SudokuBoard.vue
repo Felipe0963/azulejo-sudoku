@@ -11,6 +11,8 @@ const props = defineProps<{
   conflicting: ReadonlySet<number>;
   shakeCells: ReadonlySet<number>;
   shakeKey: number;
+  /** Painéis que a última jogada vitrificou, para animar. */
+  glazing: ReadonlySet<number>;
 }>();
 const emit = defineEmits<{ select: [cell: number] }>();
 
@@ -31,6 +33,9 @@ const isSame = (cell: number) => {
 };
 
 const glazedCell = (cell: number) => props.state.glazed[boxOf(cell)] === true;
+
+/** Anel da casa no painel, a partir do centro (0), dos lados (1) e dos cantos (2): a vitrificação vem do centro. */
+const ring = (cell: number) => Math.abs((rowOf(cell) % 3) - 1) + Math.abs((colOf(cell) % 3) - 1);
 
 function focus() {
   const target =
@@ -59,10 +64,11 @@ watch(
     class="board"
     role="grid"
     :aria-label="copy.boardLabel"
+    :class="{ 'board--won': state.won }"
     :tabindex="selected === null ? 0 : -1"
     @focus="selected === null && emit('select', 0)"
   >
-    <TileMural :glazed="state.glazed" />
+    <TileMural :glazed="state.glazed" :glazing="glazing" :won="state.won" />
     <div v-for="(row, r) in rows" :key="r" role="row" class="board__row">
       <BoardCell
         v-for="index in row"
@@ -76,6 +82,8 @@ watch(
         :same="isSame(index)"
         :conflict="conflicting.has(index)"
         :glazed="glazedCell(index)"
+        :glazing="glazing.has(boxOf(index))"
+        :ring="ring(index)"
         :shake="shakeCells.has(index)"
         :shake-key="shakeKey"
         @select="emit('select', $event)"

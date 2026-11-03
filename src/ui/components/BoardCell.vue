@@ -13,6 +13,9 @@ const props = defineProps<{
   same: boolean;
   conflict: boolean;
   glazed: boolean;
+  /** O painel acabou de ser vitrificado: a casa espera o padrão chegar até ela (ver `.cell--glazing`). */
+  glazing: boolean;
+  ring: number;
   shake: boolean;
   shakeKey: number;
 }>();
@@ -63,7 +66,9 @@ const label = computed(() =>
       'cell--same': same && !selected,
       'cell--conflict': conflict,
       'cell--glazed': glazed,
+      'cell--glazing': glazing,
     }"
+    :style="glazing ? { '--ring': ring } : undefined"
     :tabindex="selected ? 0 : -1"
     :aria-selected="selected"
     :aria-label="label"

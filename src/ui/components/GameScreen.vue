@@ -40,6 +40,11 @@ const shakeCells = computed(() => {
   return new Set(conflict?.type === 'conflict' ? conflict.cells : []);
 });
 
+/** Painéis vitrificados pela última jogada: só eles animam (ao carregar a partida, o mural aparece pronto). */
+const glazing = computed(
+  () => new Set(props.events.flatMap((event) => (event.type === 'glazed' ? [event.box] : []))),
+);
+
 defineExpose({
   /** Foco na casa selecionada, ou no tabuleiro se não houver uma. */
   focusBoard: () => {
@@ -68,6 +73,7 @@ defineExpose({
         :conflicting="conflicting"
         :shake-cells="shakeCells"
         :shake-key="actionId"
+        :glazing="glazing"
         :inert="paused"
         @select="emit('select', $event)"
       />
