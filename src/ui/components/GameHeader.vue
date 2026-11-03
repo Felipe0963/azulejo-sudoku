@@ -8,11 +8,13 @@ const emit = defineEmits<{ pause: []; home: [] }>();
 
 <template>
   <header class="game-header">
-    <button type="button" class="tool" @click="emit('home')">{{ copy.changeLevel }}</button>
-    <span>{{ copy.levels[level] }}</span>
-    <span class="time"
+    <button type="button" class="game-header__home" @click="emit('home')">{{ copy.changeLevel }}</button>
+    <span class="game-header__level">{{ copy.levels[level] }}</span>
+    <span class="game-header__time time"
       ><span class="visually-hidden">{{ copy.time }} </span>{{ formatTime(elapsedMs) }}</span
     >
-    <button type="button" class="tool" :disabled="paused" @click="emit('pause')">{{ copy.pause }}</button>
+    <button type="button" class="tool game-header__pause" :disabled="paused" @click="emit('pause')">
+      {{ copy.pause }}
+    </button>
   </header>
 </template>

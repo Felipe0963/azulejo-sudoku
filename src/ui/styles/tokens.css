@@ -1,16 +1,18 @@
 :root {
-  /* A parede de azulejos. Contraste a conferir na Tarefa 12: cobalto sobre glaze e branco sobre cobalto ≥ 4,5:1. */
+  /* A parede de azulejos. Contraste medido na Tarefa 12 (WCAG): todos os números e textos ≥ 4,5:1. */
   --wall: #eef0ea;
   --glaze: #f5f8fc;
   --grout: #b9c0c9;
   --cobalt: #1f3f8f;
   --cobalt-deep: #0f2557;
-  --cobalt-soft: #5b7fd1;
+  /* Traços do mural: escuros o bastante para o número branco ficar ≥ 4,5:1 mesmo sobre eles (5,43:1). */
+  --cobalt-soft: #4466bb;
   --veil: #dfe8f7;
   --same: #c7d6f2;
   --ochre: #f3d9a4;
   --ochre-deep: #7a4d00;
   --white: #ffffff;
+  --muted: #5a6472;
 
   --font-digit: 'Young Serif', Georgia, serif;
   --font-ui: 'Atkinson Hyperlegible', system-ui, sans-serif;

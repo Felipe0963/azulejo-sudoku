@@ -38,7 +38,7 @@ const corners = [
           <circle v-for="[x, y] in corners" :key="`${x}-${y}`" :cx="x" :cy="y" r="180" />
           <circle v-for="[x, y] in corners" :key="`inner-${x}-${y}`" :cx="x" :cy="y" r="110" />
         </g>
-        <g fill="none" stroke="var(--white)" stroke-opacity="0.35" stroke-width="3">
+        <g fill="none" stroke="var(--white)" stroke-opacity="0.18" stroke-width="3">
           <path d="M450 0 L900 450 L450 900 L0 450 Z" />
           <circle cx="450" cy="450" r="60" />
         </g>

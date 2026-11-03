@@ -98,17 +98,18 @@ Contraste mínimo de 4,5:1 para todos os números e textos, inclusive os número
 | Estado | Aparência |
 |---|---|
 | Número do puzzle | Cobalto, peso regular |
-| Número do jogador | Cobalto escuro, peso diferente (não depende só da cor) |
+| Número do jogador | Cobalto escuro, Atkinson Hyperlegible em negrito (forma e peso diferentes do número do puzzle, não só a cor) |
 | Selecionada | Contorno cobalto grosso |
 | Mesma linha, coluna ou bloco | Véu azul claro |
 | Mesmo número | Destaque sutil |
 | Conflito | Fundo ocre e sublinhado tracejado |
 | Anotações | Números pequenos numa grade 3×3 dentro da casa |
-| Vitrificada | Número branco sobre o padrão azul, com brilho de esmalte |
+| Vitrificada | Número branco sobre o padrão azul, com brilho de esmalte e um halo cobalto sutil sob o número |
+| Conflito numa casa vitrificada | Número branco, anel e sublinhado tracejado em ocre claro |
 
 ### Tipografia
 
-- **Números:** Young Serif.
+- **Números:** Young Serif nos números do puzzle, no teclado e no cronômetro (algarismos tabulares); Atkinson Hyperlegible em negrito nos números do jogador. Sem itálico nem negrito sintéticos (`font-synthesis: none`).
 - **Interface:** Atkinson Hyperlegible.
 - Fontes servidas pelo próprio site (Fontsource).
 

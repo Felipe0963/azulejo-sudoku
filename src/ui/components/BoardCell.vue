@@ -71,7 +71,13 @@ const label = computed(() =>
     @click="emit('select', cell)"
   >
     <Transition name="stamp">
-      <span v-if="value !== 0" :key="value" :class="{ 'cell__value--player': !given }" aria-hidden="true">
+      <span
+        v-if="value !== 0"
+        :key="value"
+        class="cell__value"
+        :class="{ 'cell__value--player': !given }"
+        aria-hidden="true"
+      >
         {{ value }}
       </span>
       <NotesGrid v-else-if="notes.length > 0" :notes="notes" />
