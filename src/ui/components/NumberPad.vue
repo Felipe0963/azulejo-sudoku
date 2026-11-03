@@ -16,8 +16,9 @@ const emit = defineEmits<{ input: [digit: number] }>();
       :disabled="remaining[digit] === 0"
       @click="emit('input', digit)"
     >
-      <span aria-hidden="true">{{ digit }}</span>
-      <small aria-hidden="true">{{ remaining[digit] }}</small>
+      <!-- O espaço entre os dois deixa o texto visível ("9 7") contido no nome acessível ("Place 9, 7 left"). -->
+      <span aria-hidden="true">{{ digit }}</span
+      >{{ ' ' }}<small aria-hidden="true">{{ remaining[digit] }}</small>
     </button>
   </div>
 </template>

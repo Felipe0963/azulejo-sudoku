@@ -1,4 +1,4 @@
-import data from '../data/puzzles.json';
+import data from '../data/puzzles.json' with { type: 'json' };
 import type { Level } from './grade';
 import { parse } from './grid';
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { GameEvent, GameState } from '../../game';
+import { copy } from '../content/copy';
 import SudokuBoard from './SudokuBoard.vue';
 import GameHeader from './GameHeader.vue';
 import NumberPad from './NumberPad.vue';
@@ -40,6 +41,7 @@ const shakeCells = computed(() => {
 
 <template>
   <main class="game">
+    <h1 class="visually-hidden">{{ copy.title }}</h1>
     <GameHeader
       :level="state.level"
       :elapsed-ms="elapsedMs"
