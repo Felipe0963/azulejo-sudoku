@@ -48,6 +48,14 @@ export interface Result {
 
 const unchanged = (state: GameState): Result => ({ state, events: [] });
 
+/** Painéis iguais à solução e se o tabuleiro inteiro já é a solução. */
+export function progress(values: Values, solution: Values): { glazed: boolean[]; won: boolean } {
+  return {
+    glazed: BOXES.map((box) => box.every((cell) => values[cell] === solution[cell])),
+    won: values.every((value, cell) => value === solution[cell]),
+  };
+}
+
 export function newGame(level: Level, puzzle: Values): GameState {
   const solution = solve(puzzle);
   if (!solution) throw new Error('This puzzle has no solution.');
@@ -57,7 +65,7 @@ export function newGame(level: Level, puzzle: Values): GameState {
     solution,
     values: [...puzzle],
     notes: Array<number>(81).fill(0),
-    glazed: BOXES.map((box) => box.every((cell) => puzzle[cell] === solution[cell])),
+    glazed: progress(puzzle, solution).glazed,
     hints: 0,
     past: [],
     future: [],
@@ -92,15 +100,16 @@ function conflictsAt(values: Values, cell: number): number[] {
 
 /** Registra a jogada no histórico, aplica as mudanças e confere vitrificação e vitória. */
 function commit(state: GameState, next: Snapshot, events: GameEvent[], touched: number | null): Result {
+  const reached = progress(next.values, state.solution);
   let glazed = next.glazed;
   if (touched !== null) {
     const box = boxOf(touched);
-    if (!glazed[box] && BOXES[box]!.every((cell) => next.values[cell] === state.solution[cell])) {
+    if (!glazed[box] && reached.glazed[box]) {
       glazed = glazed.map((value, index) => (index === box ? true : value));
       events.push({ type: 'glazed', box });
     }
   }
-  const won = next.values.every((value, cell) => value === state.solution[cell]);
+  const won = reached.won;
   if (won) events.push({ type: 'won' });
   return {
     state: { ...state, ...next, glazed, won, past: [...state.past, snapshotOf(state)], future: [] },

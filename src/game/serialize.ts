@@ -1,6 +1,6 @@
-import { newGame, type GameState } from './game';
+import { newGame, progress, type GameState } from './game';
 import { LEVELS, type Level } from './grade';
-import { BOXES, format, parse } from './grid';
+import { format, parse } from './grid';
 
 const VERSION = 1;
 
@@ -58,8 +58,7 @@ export function deserialize(text: string): Saved | null {
     const values = parse(raw.values);
     if (puzzle.some((value, cell) => value !== 0 && values[cell] !== value)) return null;
     const fresh = newGame(raw.level, puzzle);
-    const glazed = BOXES.map((box) => box.every((cell) => values[cell] === fresh.solution[cell]));
-    const won = values.every((value, cell) => value === fresh.solution[cell]);
+    const { glazed, won } = progress(values, fresh.solution);
     return {
       state: { ...fresh, values, notes: raw.notes, hints: raw.hints, glazed, won },
       elapsedMs: raw.elapsedMs,
