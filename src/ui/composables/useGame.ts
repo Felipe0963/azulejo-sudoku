@@ -30,6 +30,7 @@ export function useGame() {
     state.value = saved;
     events.value = [];
     selected.value = null;
+    notesMode.value = false;
   }
 
   function dispatch(action: Action) {
