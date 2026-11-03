@@ -124,13 +124,17 @@ function placeDigit(state: GameState, cell: number, digit: number, extra: GameEv
   return commit(state, { ...snapshotOf(state), values, notes }, events, cell);
 }
 
+/**
+ * Casa que a dica revela: a selecionada, se ela está vazia ou errada e pode ser editada. Senão, a primeira casa
+ * vazia em ordem de leitura fora de painel vitrificado; só sem casa vazia, a primeira casa errada.
+ */
 function hintTarget(state: GameState, cell: number | null): number | null {
-  if (cell !== null && blockedReason(state, cell) === null && state.values[cell] !== state.solution[cell])
-    return cell;
-  const index = state.values.findIndex(
-    (value, i) => value !== state.solution[i] && blockedReason(state, i) === null,
-  );
-  return index === -1 ? null : index;
+  const editable = (i: number) => blockedReason(state, i) === null;
+  if (cell !== null && editable(cell) && state.values[cell] !== state.solution[cell]) return cell;
+  const empty = state.values.findIndex((value, i) => value === 0 && editable(i));
+  if (empty !== -1) return empty;
+  const wrong = state.values.findIndex((value, i) => value !== state.solution[i] && editable(i));
+  return wrong === -1 ? null : wrong;
 }
 
 /** Aplica uma ação. Devolve o novo estado e os eventos; uma ação sem efeito devolve o mesmo estado. */

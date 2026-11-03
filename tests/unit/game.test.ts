@@ -119,6 +119,34 @@ describe('dica', () => {
     expect(result.events).toContainEqual({ type: 'hinted', cell: 2, digit: 4 });
   });
 
+  it('sem casa, prefere a primeira casa vazia a uma casa errada que vem antes', () => {
+    const wrong = run(start(), { type: 'place', cell: 2, digit: 1 });
+    const result = apply(wrong, { type: 'hint', cell: null });
+    expect(result.events).toContainEqual({ type: 'hinted', cell: 3, digit: 6 });
+    expect(result.state.values[2]).toBe(1);
+  });
+
+  it('com a casa selecionada já certa, vai para a primeira casa vazia', () => {
+    const state = run(start(), { type: 'place', cell: 2, digit: 1 }, { type: 'place', cell: 3, digit: 6 });
+    expect(apply(state, { type: 'hint', cell: 3 }).events).toContainEqual({
+      type: 'hinted',
+      cell: 5,
+      digit: 8,
+    });
+  });
+
+  it('sem nenhuma casa vazia, corrige a primeira casa errada', () => {
+    const others = emptyCells.filter((cell) => cell !== 2);
+    const full = others.reduce(
+      (state, cell) => apply(state, { type: 'place', cell, digit: CLASSIC_SOLUTION[cell]! }).state,
+      run(start(), { type: 'place', cell: 2, digit: 1 }),
+    );
+    expect(full.values.includes(0)).toBe(false);
+    const result = apply(full, { type: 'hint', cell: null });
+    expect(result.events).toContainEqual({ type: 'hinted', cell: 2, digit: 4 });
+    expect(result.state.won).toBe(true);
+  });
+
   it('desfazer uma dica tira o número, mas a dica continua contada', () => {
     const hinted = run(start(), { type: 'hint', cell: null });
     const undone = apply(hinted, { type: 'undo' }).state;

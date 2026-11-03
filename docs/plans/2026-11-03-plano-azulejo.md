@@ -22,7 +22,7 @@ Roteiro seguido: `projetos/roteiro-jogos/roteiro.md`.
 - **Banco:** `src/data/puzzles.json` com até 100 puzzles por nível (Expert pode ter menos, se o script não encontrar 100 no tempo-limite; o mínimo aceito é 30). A semente escolhe o puzzle: `seed % quantidade`.
 - **Histórico não é salvo:** ao recarregar a página, a partida continua, mas desfazer e refazer recomeçam vazios.
 - **Partida terminada:** depois da vitória, nenhuma ação muda o estado.
-- **Dica sem alvo válido:** sem casa selecionada (ou se ela já está certa, é do puzzle ou está vitrificada), a dica vai para a primeira casa, em ordem de leitura, cujo valor difere da solução.
+- **Dica sem alvo válido:** sem casa selecionada (ou se ela já está certa, é do puzzle ou está vitrificada), a dica vai para a primeira casa **vazia**, em ordem de leitura, fora de painel vitrificado. Só quando não há casa vazia ela corrige a primeira casa errada. Se a casa selecionada está errada, a dica corrige essa casa.
 - **Texto novo para leitor de tela:** o tabuleiro tem o nome acessível `Sudoku board` (não estava na tabela do design; registrado aqui).
 
 ## Pré-requisitos
