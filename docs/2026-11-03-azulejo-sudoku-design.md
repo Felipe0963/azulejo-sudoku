@@ -1,6 +1,6 @@
 # Azulejo — Sudoku: design
 
-Status: em revisão
+Status: aprovado e implementado
 Projeto: `projetos/sudoku`
 Roteiro seguido: `projetos/roteiro-jogos/roteiro.md`
 Idioma do jogo: inglês
