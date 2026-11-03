@@ -660,6 +660,13 @@ button {
 }
 
 /* Animações */
+
+/* Os nós que entram e saem dividem a mesma área da casa: nunca dois números em lugares diferentes. */
+.cell > * {
+  grid-area: 1 / 1;
+}
+
+/* Carimbo: o número novo entra com uma pressão; o antigo some na hora. */
 .stamp-enter-active {
   transition:
     transform 140ms ease-out,
@@ -669,6 +676,10 @@ button {
 .stamp-enter-from {
   transform: scale(1.35);
   opacity: 0;
+}
+
+.stamp-leave-active {
+  display: none;
 }
 
 .mural__panel {
