@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { BOXES } from '../../src/game/grid';
+import { BOXES, boxOf } from '../../src/game/grid';
 import { apply, newGame, type Action, type GameState } from '../../src/game/game';
 import { CLASSIC } from './fixtures';
 
@@ -49,7 +49,25 @@ describe('propriedades do jogo', () => {
     );
   });
 
-  it('desfazer tudo volta ao começo; refazer o mesmo número de vezes volta ao ponto de partida', () => {
+  it('um painel vitrificado nunca deixa de estar vitrificado e suas casas nunca mudam', () => {
+    fc.assert(
+      fc.property(actions, (list) => {
+        const states = play(list);
+        states.forEach((state, index) => {
+          if (index === 0) return;
+          const before = states[index - 1]!;
+          BOXES.forEach((box, b) => {
+            if (!before.glazed[b]) return;
+            expect(state.glazed[b]).toBe(true);
+            for (const c of box) expect(state.values[c]).toBe(before.values[c]);
+          });
+        });
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it('desfazer tudo volta ao começo fora dos painéis vitrificados; refazer o mesmo número de vezes volta ao fim', () => {
     fc.assert(
       fc.property(actions, (list) => {
         const states = play(list);
@@ -57,8 +75,15 @@ describe('propriedades do jogo', () => {
         if (last.won) return;
         let current = last;
         while (current.past.length > 0) current = apply(current, { type: 'undo' }).state;
-        expect(current.values).toEqual(states[0]!.values);
-        expect(current.notes).toEqual(states[0]!.notes);
+        // A vitrificação é permanente: as casas dos painéis vitrificados ficam como no fim; o resto volta ao começo.
+        const locked = (index: number) => last.glazed[boxOf(index)] === true;
+        current.values.forEach((value, index) => {
+          expect(value).toBe(locked(index) ? last.values[index] : states[0]!.values[index]);
+        });
+        current.notes.forEach((mask, index) => {
+          expect(mask).toBe(locked(index) ? last.notes[index] : states[0]!.notes[index]);
+        });
+        expect(current.glazed).toEqual(last.glazed);
         // As dicas ficam fora do histórico: desfazer não devolve dica usada.
         expect(current.hints).toBe(last.hints);
         // Se a sequência terminou com desfazer, `last` ainda tem jogadas a refazer; refazer só as desfeitas volta a `last`.

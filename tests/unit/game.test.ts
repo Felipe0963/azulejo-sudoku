@@ -176,6 +176,50 @@ describe('desfazer e refazer', () => {
     expect(apply(state, { type: 'redo' }).state).toBe(state);
   });
 
+  // Casas vazias do bloco 0 do puzzle clássico, com os números da solução: completá-las vitrifica o painel.
+  const panel0 = [
+    { type: 'place', cell: 2, digit: 4 },
+    { type: 'place', cell: 10, digit: 7 },
+    { type: 'place', cell: 11, digit: 2 },
+    { type: 'place', cell: 18, digit: 1 },
+  ] as const;
+  const box0 = [0, 1, 2, 9, 10, 11, 18, 19, 20];
+
+  it('desfazer não tira a vitrificação: pula as jogadas do painel trancado e desfaz a anterior', () => {
+    const glazed = run(start(), { type: 'place', cell: 3, digit: 6 }, ...panel0);
+    expect(glazed.glazed[0]).toBe(true);
+    const undone = apply(glazed, { type: 'undo' });
+    expect(undone.events).toEqual([{ type: 'undone' }]);
+    expect(undone.state.glazed[0]).toBe(true);
+    expect(undone.state.values[3]).toBe(0);
+    for (const cell of box0) expect(undone.state.values[cell]).toBe(glazed.values[cell]);
+    expect(undone.state.past).toHaveLength(0);
+  });
+
+  it('refazer depois disso volta ao estado vitrificado', () => {
+    const glazed = run(start(), { type: 'place', cell: 3, digit: 6 }, ...panel0);
+    const redone = run(glazed, { type: 'undo' }, { type: 'redo' });
+    expect(redone.values).toEqual(glazed.values);
+    expect(redone.glazed).toEqual(glazed.glazed);
+    expect(redone.future).toHaveLength(0);
+    expect(apply(redone, { type: 'redo' }).state).toBe(redone);
+  });
+
+  it('se todas as jogadas eram do painel vitrificado, não sobra nada para desfazer', () => {
+    const glazed = run(start(), ...panel0);
+    expect(glazed.past).toHaveLength(0);
+    expect(apply(glazed, { type: 'undo' }).state).toBe(glazed);
+  });
+
+  it('desfazer volta as anotações de fora do painel, mas não mexe nas casas dele', () => {
+    const glazed = run(start(), { type: 'toggleNote', cell: 3, digit: 4 }, ...panel0);
+    expect(glazed.notes[3]! & bit(4)).toBe(0);
+    const undone = run(glazed, { type: 'undo' });
+    expect(undone.notes[3]! & bit(4)).not.toBe(0);
+    expect(undone.glazed[0]).toBe(true);
+    for (const cell of box0) expect(undone.values[cell]).toBe(glazed.values[cell]);
+  });
+
   it('uma jogada nova apaga o refazer', () => {
     const undone = run(start(), { type: 'place', cell: 2, digit: 4 }, { type: 'undo' });
     expect(run(undone, { type: 'place', cell: 2, digit: 1 }).future).toHaveLength(0);

@@ -3,16 +3,19 @@ import type { Level } from './grade';
 import { BOXES, PEERS, UNITS, boxOf, type Values } from './grid';
 import { solve } from './solver';
 
-/** A parte do estado que desfazer e refazer guardam. As dicas usadas ficam fora: desfazer não as devolve. */
+/**
+ * A parte do estado que desfazer e refazer guardam. Ficam fora as dicas usadas (desfazer não as devolve) e os
+ * painéis vitrificados (a vitrificação é permanente).
+ */
 export interface Snapshot {
   readonly values: Values;
   /** Máscara de anotações de cada casa. */
   readonly notes: readonly number[];
-  readonly glazed: readonly boolean[];
 }
 
 export interface GameState extends Snapshot {
   readonly level: Level;
+  readonly glazed: readonly boolean[];
   readonly hints: number;
   readonly puzzle: Values;
   readonly solution: Values;
@@ -73,7 +76,33 @@ export function newGame(level: Level, puzzle: Values): GameState {
   };
 }
 
-const snapshotOf = ({ values, notes, glazed }: Snapshot): Snapshot => ({ values, notes, glazed });
+const snapshotOf = ({ values, notes }: Snapshot): Snapshot => ({ values, notes });
+
+const sameSnapshot = (a: Snapshot, b: Snapshot): boolean =>
+  a.values.every((value, cell) => value === b.values[cell]) &&
+  a.notes.every((mask, cell) => mask === b.notes[cell]);
+
+/**
+ * Reescreve o histórico depois de uma vitrificação: em cada entrada, as casas dos painéis vitrificados ficam como
+ * estão agora. Entradas que ficam iguais à seguinte (jogadas dentro do painel agora trancado) saem, para desfazer
+ * e refazer pularem direto para a jogada seguinte que muda alguma coisa.
+ */
+function lockHistory(past: readonly Snapshot[], current: Snapshot, glazed: readonly boolean[]): Snapshot[] {
+  const locked = (cell: number) => glazed[boxOf(cell)] === true;
+  const kept: Snapshot[] = [];
+  let after = current;
+  for (let index = past.length - 1; index >= 0; index--) {
+    const entry = past[index]!;
+    const projected: Snapshot = {
+      values: entry.values.map((value, cell) => (locked(cell) ? current.values[cell]! : value)),
+      notes: entry.notes.map((mask, cell) => (locked(cell) ? current.notes[cell]! : mask)),
+    };
+    if (sameSnapshot(projected, after)) continue;
+    kept.push(projected);
+    after = projected;
+  }
+  return kept.reverse();
+}
 
 function blockedReason(state: GameState, cell: number): 'given' | 'glazed' | null {
   if (state.puzzle[cell] !== 0) return 'given';
@@ -96,20 +125,19 @@ function conflictsAt(values: Values, cell: number): number[] {
 /** Registra a jogada no histórico, aplica as mudanças e confere vitrificação e vitória. */
 function commit(state: GameState, next: Snapshot, events: GameEvent[], touched: number | null): Result {
   const reached = progress(next.values, state.solution);
-  let glazed = next.glazed;
+  let glazed = state.glazed;
+  let past = [...state.past, snapshotOf(state)];
   if (touched !== null) {
     const box = boxOf(touched);
     if (!glazed[box] && reached.glazed[box]) {
       glazed = glazed.map((value, index) => (index === box ? true : value));
+      past = lockHistory(past, next, glazed);
       events.push({ type: 'glazed', box });
     }
   }
   const won = reached.won;
   if (won) events.push({ type: 'won' });
-  return {
-    state: { ...state, ...next, glazed, won, past: [...state.past, snapshotOf(state)], future: [] },
-    events,
-  };
+  return { state: { ...state, ...next, glazed, won, past, future: [] }, events };
 }
 
 function placeDigit(state: GameState, cell: number, digit: number, extra: GameEvent[] = []): Result {
@@ -183,7 +211,7 @@ export function apply(state: GameState, action: Action): Result {
       return {
         state: {
           ...state,
-          ...previous,
+          ...snapshotOf(previous),
           past: state.past.slice(0, -1),
           future: [...state.future, snapshotOf(state)],
         },
@@ -196,7 +224,7 @@ export function apply(state: GameState, action: Action): Result {
       return {
         state: {
           ...state,
-          ...next,
+          ...snapshotOf(next),
           past: [...state.past, snapshotOf(state)],
           future: state.future.slice(0, -1),
         },
