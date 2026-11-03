@@ -33,6 +33,8 @@ As regras são as do Sudoku clássico, que é de domínio público. A identidade
 - Todo puzzle tem **exatamente uma solução**.
 - O nível de um puzzle é a técnica mais difícil necessária para resolvê-lo usando as técnicas em ordem, da mais simples para a mais difícil. Puzzles que essas técnicas não resolvem não entram no banco.
 - Os puzzles vêm de um banco gerado pelo próprio projeto (cerca de 100 por nível). A URL aceita `?level=hard&seed=123` para escolher o mesmo puzzle de novo.
+- A semente da URL vale só para abrir a partida. Depois de começar uma partida (pela URL, escolhendo um nível, com `Play again` ou com `Continue`), a URL passa a mostrar `?level=<nível>&seed=<semente>` dessa partida, para recarregar a página voltar a ela. Escolher um nível no início sempre sorteia uma semente nova. Na tela de início, a URL fica sem parâmetros.
+- Se, ao abrir pela URL, existe uma partida salva do mesmo nível e do mesmo puzzle, ela continua de onde parou.
 
 ### Jogadas
 
@@ -41,7 +43,8 @@ As regras são as do Sudoku clássico, que é de domínio público. A identidade
 - Apagar: Delete, Backspace ou botão de apagar.
 - **Anotações:** modo para marcar candidatos pequenos na casa. A tecla N liga e desliga o modo.
 - Ao colocar um número, ele sai das anotações da mesma linha, coluna e bloco.
-- **Desfazer e refazer** qualquer jogada (Ctrl/Cmd+Z e Ctrl/Cmd+Shift+Z, ou botões).
+- **Desfazer e refazer** qualquer jogada (Ctrl/Cmd+Z e Ctrl/Cmd+Shift+Z ou Ctrl+Y, ou botões). O histórico não é salvo: ao recarregar, a partida continua, mas desfazer e refazer recomeçam vazios.
+- Os atalhos valem em toda a tela de jogo (mesmo com o foco num botão), menos com a pausa ou a vitória abertas.
 - Números do puzzle original não podem ser alterados.
 
 ### Validação
@@ -53,16 +56,17 @@ As regras são as do Sudoku clássico, que é de domínio público. A identidade
 
 - Um bloco completo e igual à solução é **vitrificado**: os números passam a fazer parte do padrão do azulejo.
 - Um painel vitrificado não pode mais ser editado.
+- A vitrificação é **permanente**: desfazer e refazer não mexem nas casas de um painel vitrificado. Jogadas que eram só dentro dele são puladas pelo desfazer e pelo refazer.
 - Os 9 painéis juntos formam o mural.
 
 ### Dica
 
-- Revela o número correto da casa selecionada. Sem casa selecionada (ou com uma casa já preenchida e correta), revela uma casa vazia escolhida pelo jogo, de forma determinística.
-- O número de dicas usadas aparece no resultado.
+- Revela o número correto da casa selecionada, se ela está vazia ou errada. Sem casa selecionada (ou com uma casa já certa, do puzzle ou vitrificada), revela a primeira casa **vazia** em ordem de leitura fora de painel vitrificado; só sem casa vazia, corrige a primeira casa errada.
+- O número de dicas usadas aparece no resultado. Desfazer uma dica tira o número, mas a dica continua contada.
 
 ### Tempo e progresso
 
-- Cronômetro que pausa com a aba oculta e na tela de pausa.
+- Cronômetro que pausa com a aba oculta e na tela de pausa. Uma pausa pedida pelo jogador não termina sozinha quando a aba volta.
 - Melhor tempo salvo por nível (`localStorage`).
 - A partida em andamento é salva sozinha e pode ser retomada.
 - Se o armazenamento falhar, o jogo funciona sem salvar.
@@ -131,16 +135,17 @@ Contraste mínimo de 4,5:1 para todos os números e textos, inclusive os número
 | Colocar número | Pequena pressão de carimbo |
 | Conflito | Tremor leve, uma vez |
 | Vitrificar | Brilho de forno atravessando o painel; padrão surgindo do centro |
-| Vitória | Os 9 painéis brilham em sequência e a tela de vitória entra |
+| Vitória | Os 9 painéis brilham em sequência e a tela de vitória entra (ela espera a sequência) |
 | Seleção | Véu aparecendo suavemente |
 
 - **Movimento reduzido:** sem tremor nem brilho atravessando; só transições curtas de opacidade; o padrão aparece direto.
+- **Contraste durante as animações:** ao vitrificar, cada casa mantém o fundo de faiança e o número escuro até o padrão cobri-la inteira; o brilho é fraco o bastante para o número branco ficar ≥ 4,5:1 em todos os quadros.
 
 ### Telas
 
 1. **Início:** título, botão de continuar (se houver partida salva) e os quatro níveis em azulejos grandes.
 2. **Jogo:** tabuleiro, ferramentas e teclado numérico.
-3. **Pausa:** o tabuleiro fica coberto e o cronômetro para.
+3. **Pausa:** o tabuleiro fica coberto e o cronômetro para. O resto do jogo fica inerte e o foco fica no `Resume`; ao retomar, o foco volta para a casa selecionada (ou para o tabuleiro).
 4. **Vitória:** mural completo, tempo, nível, dicas usadas, melhor tempo e botões para jogar de novo ou mudar de nível.
 
 ## 4. Textos (inglês)
@@ -155,7 +160,7 @@ Contraste mínimo de 4,5:1 para todos os números e textos, inclusive os número
 | Aviso ao começar outra | `Starting a new game replaces the one in progress.` |
 | Cronômetro | `Time` |
 | Ferramentas | `Undo` · `Redo` · `Erase` · `Notes` · `Hint` |
-| Modo de anotações (leitor de tela) | `Notes on` · `Notes off` |
+| Modo de anotações (leitor de tela) | `Notes on` · `Notes off` (anunciados na região `aria-live` ao trocar de modo; o botão `Notes` usa `aria-pressed`) |
 | Pausa | `Pause` · `Paused` · `Resume` |
 | Teclado numérico (nome acessível) | `Place 5, 3 left` (exemplo) |
 | Casa (nome acessível) | `Row 2, column 7, 5, given` · `Row 2, column 7, empty` · `Row 2, column 7, notes 1, 4, 9` · com sufixos `, conflict` e `, glazed` |
@@ -180,13 +185,15 @@ O motor é TypeScript puro e não conhece o Vue. Uma ação devolve o novo estad
 | Arquivo | Responsabilidade |
 |---|---|
 | `grid.ts` | Tipos, índices, linhas, colunas, blocos e casas vizinhas (peers) |
-| `validate.ts` | Conflitos e tabuleiro resolvido |
+| `validate.ts` | Conflitos |
 | `solver.ts` | Solução por tentativa e contagem de soluções (até 2) |
-| `techniques/` | Uma técnica por arquivo: naked single, hidden single, pointing/claiming, naked pair, hidden pair, X-Wing |
+| `techniques/` | Uma técnica por arquivo: naked single, hidden single, pointing/claiming, naked pair, hidden pair, X-Wing; `spots.ts` com as casas que ainda aceitam um número |
 | `grade.ts` | Resolve com as técnicas em ordem e devolve o nível |
 | `generate.ts` | Gera uma solução completa e remove números mantendo a solução única |
 | `random.ts` | Gerador com semente |
-| `game.ts` | Estado e ações: colocar, apagar, anotar, dica, desfazer, refazer; vitrificação e vitória |
+| `game.ts` | Estado e ações: colocar, apagar, anotar, dica, desfazer, refazer; vitrificação e vitória (`progress`, usada também por `serialize.ts`) |
+| `serialize.ts` | Salvar e restaurar a partida, recusando dados inválidos |
+| `bank.ts` | Escolha de puzzle no banco pela semente, e a semente de um puzzle do banco |
 
 ### Banco de puzzles
 
@@ -205,10 +212,11 @@ O motor é TypeScript puro e não conhece o Vue. Uma ação devolve o novo estad
 | `composables/useAnnouncer.ts` | Região `aria-live` |
 | `components/HomeScreen.vue`, `LevelPicker.vue` | Início e níveis |
 | `components/GameScreen.vue` | Monta o jogo |
-| `components/Board.vue`, `Cell.vue`, `NotesGrid.vue` | Tabuleiro, casa e anotações |
-| `components/Toolbar.vue`, `NumberPad.vue` | Ferramentas e teclado |
+| `components/GameHeader.vue` | Nível, cronômetro, pausa e voltar ao início |
+| `components/SudokuBoard.vue`, `BoardCell.vue`, `NotesGrid.vue` | Tabuleiro, casa e anotações |
+| `components/GameToolbar.vue`, `NumberPad.vue` | Ferramentas e teclado |
 | `components/PauseOverlay.vue`, `WinScreen.vue` | Pausa e vitória |
-| `components/Mural.vue` | Padrão do mural em SVG |
+| `components/TileMural.vue` | Padrão do mural em SVG (rosácea com volutas) |
 | `content/copy.ts` | Todos os textos |
 | `styles/tokens.css` | Cores, fontes e espaçamentos |
 
@@ -216,13 +224,13 @@ O motor é TypeScript puro e não conhece o Vue. Uma ação devolve o novo estad
 
 - O tabuleiro é uma grade com uma única parada de Tab; setas movem a seleção; cada casa tem nome acessível com linha, coluna, conteúdo e estado.
 - Números, apagar, anotações, desfazer e refazer funcionam pelo teclado.
-- Região `aria-live="polite"` para vitrificação, conflitos, dicas, ações bloqueadas e vitória.
+- Região `aria-live="polite"` para vitrificação, conflitos, dicas, ações bloqueadas e modo de anotações. A vitória é anunciada numa região de status dentro do diálogo modal (com ele aberto, o resto da página fica inerte).
 - Contraste mínimo de 4,5:1; conflito marcado por cor e por traço.
 - `prefers-reduced-motion` respeitado.
 
 ### Erros e casos de borda
 
-- Partida salva corrompida ou de versão antiga: descartada, o jogo volta ao início.
+- Partida salva corrompida, de versão antiga ou impossível (tempo ou dicas negativos, puzzle sem solução única, anotação em casa preenchida, partida já vencida): apagada, o jogo volta ao início.
 - Armazenamento bloqueado: o jogo funciona sem salvar.
 - Mudar número do puzzle ou painel vitrificado: nada muda, e a ação é anunciada.
 
@@ -243,7 +251,8 @@ O motor é TypeScript puro e não conhece o Vue. Uma ação devolve o novo estad
 - Gerador: puzzles com solução única, a partir de uma semente, de forma reproduzível.
 - Banco: todo puzzle único e no nível declarado.
 - Ações: colocar, apagar, anotações, limpeza automática das anotações, dica, vitrificação e vitória.
-- **Propriedades** (fast-check): desfazer e refazer voltam ao mesmo estado; números do puzzle nunca mudam; um painel só vitrifica quando igual à solução; vitória só com o tabuleiro resolvido.
+- **Propriedades** (fast-check): desfazer e refazer voltam ao mesmo estado (fora dos painéis vitrificados); números do puzzle nunca mudam; um painel só vitrifica quando igual à solução; um painel vitrificado nunca deixa de estar vitrificado; vitória só com o tabuleiro resolvido. As ações são viciadas para a partida avançar, e o teste exige que as execuções vitrifiquem e vençam.
+- Solidez: numa amostra do banco, nenhuma técnica coloca ou elimina algo que contradiga a solução.
 
 ### Navegador (Playwright + axe, desktop e celular)
 

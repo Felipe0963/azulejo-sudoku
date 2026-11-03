@@ -23,6 +23,9 @@ Roteiro seguido: `projetos/roteiro-jogos/roteiro.md`.
 - **Histórico não é salvo:** ao recarregar a página, a partida continua, mas desfazer e refazer recomeçam vazios.
 - **Partida terminada:** depois da vitória, nenhuma ação muda o estado.
 - **Dica sem alvo válido:** sem casa selecionada (ou se ela já está certa, é do puzzle ou está vitrificada), a dica vai para a primeira casa **vazia**, em ordem de leitura, fora de painel vitrificado. Só quando não há casa vazia ela corrige a primeira casa errada. Se a casa selecionada está errada, a dica corrige essa casa.
+- **Vitrificação permanente:** desfazer e refazer não mexem num painel vitrificado. Ao vitrificar, o histórico é reescrito com as casas do painel como estão; entradas que ficam iguais à seguinte saem, então desfazer pula as jogadas que eram só dentro do painel.
+- **Dicas fora do histórico:** `hints` fica só no `GameState`; desfazer uma dica tira o número, mas não a contagem.
+- **URL da partida:** depois de começar uma partida, a URL vira `?level=<nível>&seed=<semente>` (com `history.replaceState`); ao continuar uma partida salva, a semente é a de `seedOf` (índice no banco mais o tamanho do banco).
 - **Texto novo para leitor de tela:** o tabuleiro tem o nome acessível `Sudoku board` (não estava na tabela do design; registrado aqui).
 
 ## Pré-requisitos
@@ -50,7 +53,7 @@ Roteiro seguido: `projetos/roteiro-jogos/roteiro.md`.
 | `src/data/puzzles.json` | Banco de puzzles |
 | `src/ui/content/copy.ts` | Textos e anúncios |
 | `src/ui/composables/*.ts` | `useGame`, `useTimer`, `useKeyboard`, `usePersistence`, `useBestTimes`, `useAnnouncer` |
-| `src/ui/components/*.vue` | `HomeScreen`, `LevelPicker`, `GameScreen`, `GameHeader`, `Board`, `Cell`, `NotesGrid`, `Toolbar`, `NumberPad`, `PauseOverlay`, `WinScreen`, `Mural` |
+| `src/ui/components/*.vue` | `HomeScreen`, `LevelPicker`, `GameScreen`, `GameHeader`, `SudokuBoard`, `BoardCell`, `NotesGrid`, `GameToolbar`, `NumberPad`, `PauseOverlay`, `WinScreen`, `TileMural` |
 | `src/ui/styles/tokens.css`, `src/ui/styles/app.css` | Tokens e estilos |
 | `src/App.vue`, `src/main.ts` | Montagem |
 | `tests/unit/*.test.ts` | Testes do motor e dos textos |
