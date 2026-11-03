@@ -1,12 +1,12 @@
-import { digits, has } from '../candidates';
+import { digits } from '../candidates';
 import { UNITS } from '../grid';
+import { spotsOf } from './spots';
 import type { Placement, Technique } from './types';
 
 /** Dois números que, numa unidade, só cabem nas mesmas duas casas: os outros candidatos dessas casas saem. */
 export const hiddenPair: Technique = (grid) => {
   for (const unit of UNITS) {
-    const spots = (digit: number) =>
-      unit.filter((cell) => grid.values[cell] === 0 && has(grid.candidates[cell]!, digit));
+    const spots = (digit: number) => spotsOf(grid, unit, digit);
     for (let a = 1; a <= 9; a++) {
       const first = spots(a);
       if (first.length !== 2) continue;

@@ -1,9 +1,6 @@
-import { has } from '../candidates';
 import { BOXES, COLS, ROWS, boxOf, colOf, rowOf } from '../grid';
+import { spotsOf } from './spots';
 import type { Placement, Step, Technique } from './types';
-
-const spotsOf = (grid: Parameters<Technique>[0], unit: readonly number[], digit: number) =>
-  unit.filter((cell) => grid.values[cell] === 0 && has(grid.candidates[cell]!, digit));
 
 const eliminations = (grid: Parameters<Technique>[0], cells: readonly number[], digit: number): Placement[] =>
   spotsOf(grid, cells, digit).map((cell) => ({ cell, digit }));
