@@ -1,9 +1,14 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 
-/** Cronômetro em milissegundos. Pausa com a aba oculta e quando `pause` é chamado. */
+/**
+ * Cronômetro em milissegundos. Pausa quando `pause` é chamado e enquanto a aba está oculta; volta sozinho com a
+ * aba visível só se foi a aba que o pausou.
+ */
 export function useTimer() {
   const elapsedMs = ref(0);
-  const running = ref(false);
+  let running = false;
+  /** O jogo quer o cronômetro andando, mas a aba está oculta. */
+  let pausedByVisibility = false;
   let startedAt = 0;
   let base = 0;
   let interval = 0;
@@ -12,19 +17,34 @@ export function useTimer() {
     elapsedMs.value = base + (performance.now() - startedAt);
   };
 
-  function resume() {
-    if (running.value) return;
-    running.value = true;
+  function start() {
+    if (running) return;
+    running = true;
     startedAt = performance.now();
     interval = window.setInterval(tick, 250);
   }
 
-  function pause() {
-    if (!running.value) return;
+  function stop() {
+    if (!running) return;
     tick();
     base = elapsedMs.value;
-    running.value = false;
+    running = false;
     window.clearInterval(interval);
+  }
+
+  /** Retoma; com a aba oculta, só começa a contar quando ela voltar. */
+  function resume() {
+    if (document.visibilityState === 'hidden') {
+      pausedByVisibility = true;
+      return;
+    }
+    start();
+  }
+
+  /** Pausa pedida pelo jogo: a volta da aba não retoma. */
+  function pause() {
+    pausedByVisibility = false;
+    stop();
   }
 
   function reset(ms = 0) {
@@ -33,14 +53,13 @@ export function useTimer() {
     elapsedMs.value = ms;
   }
 
-  let pausedByVisibility = false;
   const onVisibility = () => {
-    if (document.visibilityState === 'hidden' && running.value) {
+    if (document.visibilityState === 'hidden' && running) {
+      stop();
       pausedByVisibility = true;
-      pause();
     } else if (document.visibilityState === 'visible' && pausedByVisibility) {
       pausedByVisibility = false;
-      resume();
+      start();
     }
   };
 
@@ -52,5 +71,5 @@ export function useTimer() {
     window.clearInterval(interval);
   });
 
-  return { elapsedMs, running, resume, pause, reset };
+  return { elapsedMs, resume, pause, reset };
 }

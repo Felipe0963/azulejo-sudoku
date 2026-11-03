@@ -30,3 +30,20 @@ export async function fillSolution(page: Page, skip: ReadonlySet<number> = new S
     await type(page, index, answer[index]!);
   }
 }
+
+/** Simula a aba oculta ou visível: troca `document.visibilityState` e dispara `visibilitychange`. */
+export async function setHidden(page: Page, hidden: boolean): Promise<void> {
+  await page.evaluate((value) => {
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => (value ? 'hidden' : 'visible'),
+    });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, hidden);
+}
+
+export const firstEmpty = () => puzzle().findIndex((value) => value === 0);
+/** Nome acessível de uma casa com este número (com ou sem conflito). */
+export const shows = (digit: number) => new RegExp(`, ${String(digit)}(, conflict)?$`);
+/** O foco está no tabuleiro ou numa casa dele. */
+export const focusInBoard = (page: Page) => page.locator('.board:focus, .board :focus');
