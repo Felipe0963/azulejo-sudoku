@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ALL, bit, type CandidateGrid } from '../../src/game/candidates';
-import { ROWS } from '../../src/game/grid';
+import { COLS, ROWS } from '../../src/game/grid';
 import { applyStep } from '../../src/game/techniques/apply-step';
 import { hiddenPair } from '../../src/game/techniques/hidden-pair';
 import { hiddenSingle } from '../../src/game/techniques/hidden-single';
@@ -45,9 +45,23 @@ describe('hiddenSingle', () => {
       eliminate: [],
     });
   });
+
+  it('não acha nada quando todo número cabe em várias casas de cada unidade', () => {
+    expect(hiddenSingle(open())).toBeNull();
+  });
 });
 
 describe('lockedCandidates', () => {
+  it('não acha nada com todos os candidatos em todas as casas', () => {
+    expect(lockedCandidates(open())).toBeNull();
+  });
+
+  it('não acha nada quando o número já saiu do resto da linha', () => {
+    const grid = open();
+    for (const cell of [2, 9, 10, 11, 18, 19, 20, 3, 4, 5, 6, 7, 8]) grid.candidates[cell] = without(4);
+    expect(lockedCandidates(grid)).toBeNull();
+  });
+
   it('pointing: o 4 do bloco 0 só está na linha 0, então sai do resto da linha', () => {
     const grid = open();
     for (const cell of [2, 9, 10, 11, 18, 19, 20]) grid.candidates[cell] = without(4);
@@ -79,7 +93,69 @@ describe('nakedPair', () => {
   });
 });
 
+describe('nakedPair em outras unidades', () => {
+  it('par numa coluna: os números saem do resto da coluna', () => {
+    const grid = open();
+    grid.candidates[0] = bit(1) | bit(2);
+    grid.candidates[9] = bit(1) | bit(2);
+    const step = nakedPair(grid);
+    const expected = COLS[0]!
+      .slice(2)
+      .flatMap((cell) => [`${String(cell)}:1`, `${String(cell)}:2`])
+      .sort();
+    expect(eliminated(step)).toEqual(expected);
+  });
+
+  it('par num bloco, em linhas e colunas diferentes: os números saem do resto do bloco', () => {
+    const grid = open();
+    grid.candidates[0] = bit(1) | bit(2);
+    grid.candidates[10] = bit(1) | bit(2);
+    const expected = [1, 2, 9, 11, 18, 19, 20]
+      .flatMap((cell) => [`${String(cell)}:1`, `${String(cell)}:2`])
+      .sort();
+    expect(eliminated(nakedPair(grid))).toEqual(expected);
+  });
+
+  it('não acha nada quando o par não tem o que eliminar', () => {
+    const grid = open();
+    for (const cell of ROWS[0]!) grid.candidates[cell] = ALL & ~bit(1) & ~bit(2);
+    for (const cell of COLS[0]!) grid.candidates[cell] = ALL & ~bit(1) & ~bit(2);
+    for (const cell of COLS[1]!) grid.candidates[cell] = ALL & ~bit(1) & ~bit(2);
+    for (const cell of [2, 11, 20]) grid.candidates[cell] = ALL & ~bit(1) & ~bit(2);
+    grid.candidates[0] = bit(1) | bit(2);
+    grid.candidates[1] = bit(1) | bit(2);
+    expect(nakedPair(grid)).toBeNull();
+  });
+});
+
 describe('hiddenPair', () => {
+  it('par oculto numa coluna', () => {
+    const grid = open();
+    for (const cell of COLS[0]!.slice(2)) grid.candidates[cell] = ALL & ~bit(1) & ~bit(2);
+    const step = hiddenPair(grid);
+    const expected = [0, 9]
+      .flatMap((cell) => [3, 4, 5, 6, 7, 8, 9].map((d) => `${String(cell)}:${String(d)}`))
+      .sort();
+    expect(eliminated(step)).toEqual(expected);
+  });
+
+  it('par oculto num bloco', () => {
+    const grid = open();
+    for (const cell of [1, 2, 9, 11, 18, 19, 20]) grid.candidates[cell] = ALL & ~bit(1) & ~bit(2);
+    const expected = [0, 10]
+      .flatMap((cell) => [3, 4, 5, 6, 7, 8, 9].map((d) => `${String(cell)}:${String(d)}`))
+      .sort();
+    expect(eliminated(hiddenPair(grid))).toEqual(expected);
+  });
+
+  it('não acha nada quando as duas casas já só têm o par', () => {
+    const grid = open();
+    for (const cell of [2, 3, 4, 5, 6, 7, 8]) grid.candidates[cell] = ALL & ~bit(1) & ~bit(2);
+    grid.candidates[0] = bit(1) | bit(2);
+    grid.candidates[1] = bit(1) | bit(2);
+    expect(hiddenPair(grid)).toBeNull();
+  });
+
   it('dois números que só cabem nas mesmas duas casas tiram os outros candidatos delas', () => {
     const grid = open();
     for (const cell of [2, 3, 4, 5, 6, 7, 8]) grid.candidates[cell] = ALL & ~bit(1) & ~bit(2);
@@ -106,6 +182,27 @@ describe('xWing', () => {
       .flatMap((row) => [row * 9 + 2, row * 9 + 6].map((cell) => `${String(cell)}:5`))
       .sort();
     expect(eliminated(step)).toEqual(expected);
+  });
+});
+
+describe('xWing por colunas', () => {
+  it('o 5 só nas linhas 2 e 6 das colunas 1 e 7 sai dessas linhas nas outras colunas', () => {
+    const grid = open();
+    for (const col of [1, 7]) {
+      for (const cell of COLS[col]!) grid.candidates[cell] = without(5);
+      grid.candidates[2 * 9 + col] = ALL;
+      grid.candidates[6 * 9 + col] = ALL;
+    }
+    const step = xWing(grid);
+    expect(step?.technique).toBe('xWing');
+    const expected = [0, 2, 3, 4, 5, 6, 8]
+      .flatMap((col) => [2 * 9 + col, 6 * 9 + col].map((cell) => `${String(cell)}:5`))
+      .sort();
+    expect(eliminated(step)).toEqual(expected);
+  });
+
+  it('não acha nada com todos os candidatos em todas as casas', () => {
+    expect(xWing(open())).toBeNull();
   });
 });
 
