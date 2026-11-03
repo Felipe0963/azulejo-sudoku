@@ -1,0 +1,26 @@
+:root {
+  /* A parede de azulejos. Contraste a conferir na Tarefa 12: cobalto sobre glaze e branco sobre cobalto ≥ 4,5:1. */
+  --wall: #eef0ea;
+  --glaze: #f5f8fc;
+  --grout: #b9c0c9;
+  --cobalt: #1f3f8f;
+  --cobalt-deep: #0f2557;
+  --cobalt-soft: #5b7fd1;
+  --veil: #dfe8f7;
+  --same: #c7d6f2;
+  --ochre: #f3d9a4;
+  --ochre-deep: #7a4d00;
+  --white: #ffffff;
+
+  --font-digit: 'Young Serif', Georgia, serif;
+  --font-ui: 'Atkinson Hyperlegible', system-ui, sans-serif;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --radius: 0.4rem;
+
+  color-scheme: light;
+}
